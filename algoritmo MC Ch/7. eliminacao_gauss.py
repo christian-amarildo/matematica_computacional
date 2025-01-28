@@ -1,104 +1,160 @@
-def eliminacao(A, b):
+# -*- coding: utf-8 -*-
+"""
+Calculadora de Sistemas Lineares pelo Método de Eliminação de Gauss
+===================================================================
+
+Este programa resolve sistemas lineares da forma Ax = b utilizando o Método de Eliminação de Gauss
+seguido pela Substituição Retroativa para encontrar as soluções das variáveis.
+
+Funcionalidades:
+1. Definição da matriz de coeficientes A e do vetor de constantes b.
+2. Eliminação de Gauss para triangularizar a matriz A.
+3. Substituição Retroativa para resolver o sistema triangular superior.
+4. Validação e tratamento de erros, como matrizes singulares.
+5. Saída detalhada do processo de eliminação e substituição.
+
+"""
+
+def eliminacao_gaussiana(A, b):
     """
     Realiza a eliminação de Gauss para transformar a matriz A em uma matriz triangular superior.
-    - A: Matriz de coeficientes (n x n).
-    - b: Vetor de constantes (tamanho n).
-    - Retorna A (modificada) e b (modificado) após a eliminação de Gauss.
+    
+    Parâmetros:
+        A (list of list of floats): Matriz de coeficientes (n x n).
+        b (list of floats): Vetor de constantes (tamanho n).
+    
+    Retorna:
+        A (list of list of floats): Matriz A modificada após a eliminação de Gauss.
+        b (list of floats): Vetor b modificado após a eliminação de Gauss.
+    
+    Levanta:
+        ValueError: Se a matriz for singular (pivô zero durante a eliminação).
     """
-    n = len(A)  # n é o número de linhas da matriz A, que deve ser quadrada (n x n).
+    n = len(A)  # Obtém o número de linhas da matriz A (deve ser igual ao número de colunas)
+    
+    # Itera sobre cada coluna da matriz A
+    for k in range(n):
+        # Verifica se o pivô (elemento diagonal) é zero
+        if A[k][k] == 0:
+            raise ValueError("Matriz singular detectada durante a eliminação de Gauss. Não é possível continuar.")
+        
+        # Elimina os elementos abaixo do pivô na coluna k
+        for i in range(k + 1, n):
+            m = A[i][k] / A[k][k]  # Calcula o multiplicador para zerar A[i][k]
+            # Subtrai m vezes a linha k da linha i para eliminar A[i][k]
+            for j in range(k, n):
+                A[i][j] -= m * A[k][j]
+            # Atualiza o vetor b
+            b[i] -= m * b[k]
+        
+        # Exibe a matriz A e o vetor b após cada passo de eliminação
+        print(f"\nApós eliminar os elementos abaixo do pivô na coluna {k + 1}:")
+        print("Matriz A:")
+        for row in A:
+            print(row)
+        print("Vetor b:")
+        print(b)
+    
+    return A, b  # Retorna a matriz A e o vetor b modificados
 
-    # Eliminação de Gauss: transforma A em uma matriz triangular superior.
-    for k in range(n):  # k é o índice da linha atual sendo processada.
-        for i in range(k + 1, n):  # i é o índice das linhas abaixo da linha k.
-            
-            if A[k][k] == 0:  # Verifica se o pivô (A[k][k]) é zero.
-                # Se o pivô for zero, não é possível realizar a eliminação corretamente.
-                # Isso significa que a matriz é singular e o sistema não tem solução única.
-                raise ValueError("Matriz singular, não é possível continuar.")  # Levanta um erro caso a matriz seja singular.
-            
-            # Calcula o multiplicador m que será usado para zerar os elementos abaixo do pivô.
-            m = A[i][k] / A[k][k]  # A[i][k] é o elemento na linha i e coluna k, A[k][k] é o pivô.
-            
-            # Realiza a eliminação da linha i, subtraindo um múltiplo da linha k de A[i].
-            for j in range(k, n):  # j percorre as colunas a partir da coluna k até a última coluna.
-                A[i][j] -= m * A[k][j]  # Atualiza a linha i da matriz A, subtraindo o múltiplo da linha k.
-            
-            # Atualiza o vetor b, subtraindo m vezes o valor de b[k] de b[i].
-            b[i] -= m * b[k]  # Atualiza a constante associada à linha i do vetor b.
-
-    return A, b  # Retorna a matriz A modificada e o vetor b modificado após a eliminação de Gauss.
-
-def resolucao_sistema(A, b):
+def substituicao_retroativa(A, b):
     """
-    Resolve o sistema linear Ax = b utilizando substituição retroativa após a eliminação de Gauss.
-    - A: Matriz triangular superior (n x n).
-    - b: Vetor de constantes (tamanho n).
-    - Retorna o vetor solução x.
+    Resolve o sistema triangular superior Ax = b utilizando substituição retroativa.
+    
+    Parâmetros:
+        A (list of list of floats): Matriz triangular superior (n x n).
+        b (list of floats): Vetor de constantes (tamanho n).
+    
+    Retorna:
+        x (list of floats): Vetor solução (tamanho n).
     """
-    n = len(A)  # n é o número de variáveis, ou seja, o número de linhas/colunas da matriz A.
+    n = len(A)  # Obtém o número de variáveis (igual ao número de linhas da matriz A)
+    x = [0 for _ in range(n)]  # Inicializa o vetor solução com zeros
+    
+    # Itera de trás para frente, resolvendo para cada variável
+    for i in range(n - 1, -1, -1):
+        sum_ax = 0  # Inicializa a soma dos produtos de A[i][j] * x[j]
+        for j in range(i + 1, n):
+            sum_ax += A[i][j] * x[j]  # Acumula os produtos para as variáveis já resolvidas
+        x[i] = (b[i] - sum_ax) / A[i][i]  # Calcula a variável atual
+        print(f"Resolvendo x[{i}] = ({b[i]} - {sum_ax}) / {A[i][i]} = {x[i]}")
+    
+    return x  # Retorna o vetor solução
 
-    x = [0] * n  # Inicializa o vetor solução x com zeros. Será preenchido durante a substituição retroativa.
+def resolver_sistema(A, b):
+    """
+    Resolve o sistema linear Ax = b utilizando Eliminação de Gauss e Substituição Retroativa.
+    
+    Parâmetros:
+        A (list of list of floats): Matriz de coeficientes (n x n).
+        b (list of floats): Vetor de constantes (tamanho n).
+    
+    Retorna:
+        x (list of floats): Vetor solução (tamanho n).
+    """
+    print("Matriz original A:")
+    for row in A:
+        print(row)
+    print("Vetor original b:")
+    print(b)
+    
+    # Passo 1: Eliminação de Gauss
+    A_tri, b_tri = eliminacao_gaussiana(A, b)
+    
+    # Passo 2: Substituição Retroativa
+    x = substituicao_retroativa(A_tri, b_tri)
+    
+    return x  # Retorna a solução do sistema
 
-    # Inicia a substituição retroativa a partir da última linha.
-    x[n-1] = b[n-1] / A[n-1][n-1]  # A última variável (x[n-1]) é calculada diretamente pela equação A[n-1][n-1] * x[n-1] = b[n-1].
+def main():
+    """
+    Função principal que controla o fluxo do programa.
+    
+    Executa as seguintes etapas:
+    1. Define a matriz de coeficientes A e o vetor de constantes b.
+    2. Exibe o sistema linear original.
+    3. Executa a eliminação de Gauss para triangularizar a matriz A.
+    4. Executa a substituição retroativa para encontrar as soluções das variáveis.
+    5. Exibe o vetor solução x.
+    """
+    # Exemplo de sistema linear 4x4:
+    # 1x + 1y + 0z + 3w = 4
+    # 2x + 1y -1z +1w = 1
+    # 3x -1y -1z +2w = -3
+    # -1x +2y +3z -1w = 4
+    A = [
+        [1, 1, 0, 3],
+        [2, 1, -1, 1],
+        [3, -1, -1, 2],
+        [-1, 2, 3, -1]
+    ]
+    
+    b = [4, 1, -3, 4]
+    
+    print("=== RESOLUÇÃO DE SISTEMAS LINEARES ===")
+    print("Sistema linear a ser resolvido:")
+    for i in range(len(A)):
+        eq = ""
+        for j in range(len(A[i])):
+            eq += f"{A[i][j]}x{j + 1} + "
+        eq = eq.rstrip(" + ") + f" = {b[i]}"
+        print(eq)
+    
+    # Chama a função para resolver o sistema
+    try:
+        x = resolver_sistema(A, b)  # Resolve o sistema linear
+        print("\n=== SOLUÇÃO DO SISTEMA ===")
+        for i in range(len(x)):
+            print(f"x{i + 1} = {x[i]:.6f}")  # Exibe cada variável com 6 casas decimais
+    except ValueError as ve:
+        # Trata erros como matrizes singulares
+        print(f"\nErro: {ve}")
+    except Exception as e:
+        # Trata quaisquer outros erros inesperados
+        print(f"\nOcorreu um erro inesperado: {e}")
 
-    # Agora realiza a substituição retroativa para as variáveis anteriores, de n-2 até 0.
-    for k in range(n-2, -1, -1):  # k percorre as linhas de baixo para cima, da penúltima linha até a primeira.
-        s = 0  # Inicializa a soma s que acumula os termos já conhecidos da equação.
+    print("\n=== FIM DA RESOLUÇÃO ===")
 
-        # Soma os termos já conhecidos para a linha k.
-        for j in range(k+1, n):  # j percorre as colunas à direita do pivô.
-            s += A[k][j] * x[j]  # Acumula os valores já conhecidos da solução (x[j]).
-
-        # Calcula o valor de x[k] isolando-o na equação A[k][k] * x[k] = b[k] - s.
-        x[k] = (b[k] - s) / A[k][k]  # x[k] é calculado dividindo o valor restante pela diagonal de A[k][k].
-
-    return x  # Retorna o vetor solução x.
-
-# Exemplo:
-
-# Define a matriz de coeficientes A do sistema linear.
-A = [
-    [1, 1, 0, 3],  # A primeira linha da matriz A.
-    [2, 1, -1, 1],  # A segunda linha da matriz A.
-    [3, -1, -1, 2],  # A terceira linha da matriz A.
-    [-1, 2, 3, -1]  # A quarta linha da matriz A.
-]
-
-# Define o vetor de constantes b do sistema linear.
-b = [4, 1, -3, 4]  # b contém as constantes de cada equação.
-
-# Passo 1: Eliminação de Gauss
-# A função eliminacao é chamada para transformar a matriz A em uma matriz triangular superior.
-A, b = eliminacao(A, b)  # A e b são modificados pela função eliminacao.
-
-# Passo 2: Substituição retroativa
-# Agora que A é triangular superior, a função resolucao_sistema pode ser chamada para resolver o sistema.
-x = resolucao_sistema(A, b)  # A solução x do sistema é calculada.
-
-# Imprime o vetor solução x, que contém as soluções para as incógnitas do sistema.
-print(x)  # Exibe a solução do sistema linear.
-
-"""
-Comentários gerais sobre o código:
-===================================
-1. **Eliminação de Gauss:**
-   - O método de eliminação de Gauss é usado para transformar uma matriz em uma matriz triangular superior, facilitando a resolução do sistema linear por substituição retroativa.
-   - Se a matriz A for singular (ou seja, tiver um pivô igual a zero), o código levanta um erro, pois o sistema não terá uma solução única ou terá infinitas soluções.
-
-2. **Substituição retroativa:**
-   - Após a eliminação de Gauss, a matriz A se torna triangular superior, o que permite resolver o sistema linear de forma eficiente.
-   - A substituição retroativa é realizada de baixo para cima, começando pela última variável e calculando as variáveis anteriores.
-
-3. **Resolução de sistemas lineares:**
-   - O código resolve sistemas lineares de 4 equações com 4 incógnitas.
-   - O exemplo mostrado usa uma matriz A de 4x4 e um vetor b de tamanho 4.
-   - A solução é encontrada em duas etapas: eliminação de Gauss para triangularizar a matriz e substituição retroativa para encontrar as soluções das variáveis.
-
-4. **Considerações sobre a matriz A:**
-   - A matriz A deve ser quadrada (ou seja, ter o mesmo número de linhas e colunas).
-   - Caso a matriz A seja singular (tiver um pivô igual a zero), o sistema não tem solução única, e o código levanta um erro.
-
-5. **Solução final:**
-   - O vetor solução x contém os valores das incógnitas do sistema linear, que são calculados após a eliminação de Gauss e a substituição retroativa.
-"""
+# Verifica se o script está sendo executado diretamente
+if __name__ == "__main__":
+    main()  # Chama a função principal para iniciar o programa
