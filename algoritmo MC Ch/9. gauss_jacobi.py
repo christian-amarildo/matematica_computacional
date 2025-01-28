@@ -1,100 +1,168 @@
+# -*- coding: utf-8 -*-
+"""
+Calculadora de Sistemas Lineares pelo Método de Gauss-Jacobi
+===========================================================
+
+Este programa resolve sistemas de equações lineares da forma Ax = b utilizando o
+Método de Gauss-Jacobi. O método é iterativo e depende de um chute inicial para
+convergência.
+
+Funcionalidades:
+1. Definição da matriz de coeficientes A e do vetor de constantes b.
+2. Entrada dos critérios de precisão e número máximo de iterações.
+3. Execução do Método de Gauss-Jacobi com exibição detalhada de cada iteração.
+4. Validação e tratamento de erros, como matrizes não quadradas ou divisão por zero.
+5. Exibição da solução aproximada após convergência ou término das iterações.
+
+Autor: ChatGPT
+Data: 2025-01-27
+"""
+
 def gauss_jacobi(A, b, e, max_i):
     """
     Método iterativo de Gauss-Jacobi para resolver um sistema linear Ax = b.
-    A: Matriz dos coeficientes (n x n).
-    b: Vetor dos termos independentes (tamanho n).
-    e: Precisão desejada (erro máximo aceitável).
-    max_i: Número máximo de iterações permitidas.
-    Retorna o vetor solução x após a convergência ou após max_i iterações.
+
+    Parâmetros:
+        A (list of list of floats): Matriz de coeficientes (n x n).
+        b (list of floats): Vetor de constantes (tamanho n).
+        e (float): Precisão desejada (erro máximo aceitável).
+        max_i (int): Número máximo de iterações permitidas.
+
+    Retorna:
+        list of floats: Vetor solução x após a convergência ou após max_i iterações.
     """
     
-    n = len(b)  # n é o número de equações, que é igual ao tamanho do vetor b (também ao número de linhas de A).
-    
-    # Inicializando o vetor de soluções com zeros. x é a solução atual, inicializada em [0, 0, ..., 0].
-    x = [0.0] * n  # x armazena a solução em cada iteração. Inicialmente, todos os valores são zero.
+    n = len(b)  # n é o número de equações, igual ao tamanho do vetor b.
 
-    # Inicializando o vetor x_novo, que armazena os novos valores calculados em cada iteração.
+    # Verificação se a matriz A é quadrada (n x n).
+    for idx, row in enumerate(A):
+        if len(row) != n:
+            raise ValueError(f"A matriz deve ser quadrada. Linha {idx + 1} tem {len(row)} colunas.")
+
+    # Inicializando o vetor de soluções com zeros.
+    x = [0.0] * n  # x armazena a solução atual, iniciada com zeros.
+
+    # Inicializando o vetor x_novo, que armazenará os novos valores calculados.
     x_novo = [0.0] * n  # x_novo irá armazenar a solução calculada na iteração atual.
 
-    # Laço que executa o máximo de iterações permitidas (max_i).
-    for k in range(max_i):
+    print("\n=== MÉTODO DE GAUSS-JACOBI ===\n")
+    print("Sistema linear a ser resolvido:")
+    for i in range(n):
+        eq = ""
+        for j in range(n):
+            eq += f"{A[i][j]}x{j + 1} + "  # Constrói a parte esquerda da equação.
+        eq = eq.rstrip(" + ") + f" = {b[i]}"  # Remove o último " + " e adiciona "= b[i]".
+        print(eq)  # Imprime a equação.
+
+    print(f"\nChute inicial: {x}")
+    print(f"Critério de parada: Erro < {e}")
+    print(f"Número máximo de iterações: {max_i}\n")
+
+    # Loop principal que executa as iterações do método de Gauss-Jacobi.
+    for k in range(1, max_i + 1):
+        print(f"--- Iteração {k} ---")
         
-        # Laço que percorre cada equação do sistema linear.
+        # Atualiza cada variável no vetor x_novo.
         for i in range(n):
-            soma = b[i]  # Inicia a soma com o valor b[i], que é o termo independente da equação i.
+            soma = b[i]  # Inicia a soma com o termo independente b[i].
 
-            # Laço que percorre todas as variáveis (colunas) para calcular a soma.
+            # Soma os produtos de A[i][j] * x[j] para todas as j ≠ i.
             for j in range(n):
-                # Se a variável j não for igual à variável i, soma o valor de A[i][j] * x[j].
                 if i != j:
-                    soma -= A[i][j] * x[j]  # Subtrai o valor de A[i][j] multiplicado pelo valor de x[j].
+                    soma -= A[i][j] * x[j]  # Subtrai A[i][j] * x[j] da soma.
 
-            # Agora, a soma contém o valor de b[i] menos as contribuições das outras variáveis.
-            # O valor de x_novo[i] é calculado dividindo a soma pela diagonal A[i][i].
-            x_novo[i] = soma / A[i][i]  # Resolve a equação para a variável i (x_novo[i] é o novo valor de x[i]).
+            # Calcula o novo valor para x[i] dividindo a soma pela diagonal A[i][i].
+            if A[i][i] == 0:
+                raise ZeroDivisionError(f"A diagonal A[{i}][{i}] é zero. Método falhou.")
 
-        # Calcular o erro total entre a solução anterior (x) e a nova solução (x_novo).
-        e_total = 0.0  # e_total acumula o erro total, que será comparado com a precisão desejada (e).
+            x_novo[i] = soma / A[i][i]  # Atualiza o valor de x_novo[i].
 
-        # Laço que percorre todas as variáveis e calcula o erro.
-        for i in range(n):
-            e_total += abs(x_novo[i] - x[i])  # A soma do erro absoluto de cada variável.
+            print(f"x{ i +1 } (novo) = {x_novo[i]:.6f}")  # Exibe o novo valor calculado.
 
-        # Se o erro total for menor que a precisão desejada (e), isso significa que a solução convergiu.
+        # Calcula o erro total como a soma das diferenças absolutas entre x_novo e x.
+        e_total = sum(abs(x_novo[i] - x[i]) for i in range(n))
+
+        print(f"Erro total após a iteração {k}: {e_total:.6f}\n")
+
+        # Verifica se o erro total está abaixo do critério de parada.
         if e_total < e:
-            return x_novo  # Retorna a solução calculada, pois a convergência foi atingida.
+            print("Convergência alcançada.")
+            print(f"Solução aproximada após {k} iterações: {x_novo}\n")
+            return x_novo  # Retorna a solução encontrada.
 
-        # Atualiza o vetor x com os valores calculados em x_novo para a próxima iteração.
-        x = x_novo[:]  # Copia o conteúdo de x_novo para x (agora x se torna a solução atualizada).
+        # Atualiza o vetor x com os valores de x_novo para a próxima iteração.
+        x = x_novo.copy()
 
-    # Se o número máximo de iterações foi atingido e a solução não convergiu, exibe uma mensagem.
-    print("Número máximo de iterações atingido:", max_i)  # Informa que o número máximo de iterações foi alcançado.
+    # Se o método não convergir dentro do número máximo de iterações, exibe uma mensagem.
+    print("Número máximo de iterações atingido sem convergência.")
+    print(f"Solução após {max_i} iterações: {x}\n")
+    return x_novo  # Retorna a última aproximação encontrada.
 
-    # Retorna a solução após o número máximo de iterações.
-    return x_novo  # Retorna a última aproximação encontrada, mesmo que o método não tenha convergido.
+def main():
+    """
+    Função principal que controla o fluxo do programa.
+    
+    Executa as seguintes etapas:
+    1. Define a matriz de coeficientes A e o vetor de constantes b.
+    2. Solicita ao usuário os critérios de precisão e número máximo de iterações.
+    3. Executa o Método de Gauss-Jacobi para resolver o sistema.
+    4. Exibe a solução encontrada.
+    """
+    # Exemplo de sistema linear 3x3:
+    # 10x1 + 2x2 + x3 = 7
+    # x1 + 5x2 + x3 = -8
+    # 2x1 + 3x2 + 10x3 = 6
+    A = [
+        [10, 2, 1],
+        [1, 5, 1],
+        [2, 3, 10]
+    ]
+    
+    # Vetor de constantes do sistema linear
+    b = [7, -8, 6]
+    
+    print("=== RESOLUÇÃO DE SISTEMAS LINEARES COM GAUSS-JACOBI ===\n")
+    
+    # Define a precisão desejada para o erro
+    while True:
+        try:
+            e = float(input("Digite a precisão desejada (erro máximo, por exemplo, 1e-6): "))
+            if e <= 0:
+                print("A precisão deve ser um número positivo. Tente novamente.\n")
+                continue
+            break
+        except ValueError:
+            print("Entrada inválida. Por favor, digite um número válido.\n")
+    
+    # Define o número máximo de iterações permitidas
+    while True:
+        try:
+            max_i = int(input("Digite o número máximo de iterações permitidas (por exemplo, 100): "))
+            if max_i <= 0:
+                print("O número máximo de iterações deve ser um inteiro positivo. Tente novamente.\n")
+                continue
+            break
+        except ValueError:
+            print("Entrada inválida. Por favor, digite um número inteiro válido.\n")
+    
+    # Executa o Método de Gauss-Jacobi
+    try:
+        solução = gauss_jacobi(A, b, e, max_i)  # Chama a função gauss_jacobi com os parâmetros fornecidos.
+        print("=== SOLUÇÃO DO SISTEMA ===")
+        for i, valor in enumerate(solução, start=1):
+            print(f"x{i} = {valor:.6f}")  # Exibe cada variável com 6 casas decimais.
+    except ZeroDivisionError as zde:
+        # Trata o caso onde ocorre divisão por zero durante as iterações.
+        print(f"\nErro: {zde}\n")
+    except ValueError as ve:
+        # Trata erros relacionados à estrutura da matriz.
+        print(f"\nErro: {ve}\n")
+    except Exception as e:
+        # Trata quaisquer outros erros inesperados.
+        print(f"\nOcorreu um erro inesperado: {e}\n")
+    
+    print("\n=== FIM DA RESOLUÇÃO ===")
 
-# Exemplo de uso do método de Gauss-Jacobi:
-
-# Matriz dos coeficientes (sistema de equações lineares).
-A = [[10, 2, 1],  # Primeira equação: 10x1 + 2x2 + x3 = 7
-     [1, 5, 1],   # Segunda equação: x1 + 5x2 + x3 = -8
-     [2, 3, 10]]  # Terceira equação: 2x1 + 3x2 + 10x3 = 6
-
-# Vetor dos termos independentes (lado direito do sistema).
-b = [7, -8, 6]  # Os valores de b correspondem aos resultados das equações: [7, -8, 6].
-
-# Precisão desejada (erro máximo permitido entre iterações).
-e = 1e-6  # A precisão desejada é 10^-6, ou seja, o erro total entre duas iterações deve ser menor que 10^-6.
-
-# Número máximo de iterações permitidas.
-max_i = 100  # O número máximo de iterações será 100. Se não houver convergência antes disso, o método será interrompido.
-
-# Chama a função gauss_jacobi com os parâmetros definidos.
-resultado = gauss_jacobi(A, b, e, max_i)  # A função retorna o vetor solução aproximada para o sistema.
-
-# Imprime a solução calculada.
-print("Solução:", resultado)  # Exibe a solução final após a execução do método de Gauss-Jacobi.
-
-"""
-Comentários gerais sobre o código:
-===================================
-1. **Método de Gauss-Jacobi:**
-   - Gauss-Jacobi é um método iterativo para resolver sistemas de equações lineares. Ele usa as soluções da iteração anterior para calcular as soluções da iteração atual, até que a solução converja para um valor suficientemente preciso ou um número máximo de iterações seja alcançado.
-
-2. **Fórmula de atualização:**
-   - A fórmula de atualização usada no método de Gauss-Jacobi para cada variável é dada por:
-     x_i^(k+1) = (b_i - somatório(A[i][j] * x_j)) / A[i][i]
-   - Ou seja, a solução de uma variável depende das soluções das outras variáveis na iteração anterior.
-
-3. **Critério de parada:**
-   - O critério de parada é baseado no erro total entre a solução atual e a solução anterior. Se o erro total for menor que a precisão desejada (e), o método para e retorna a solução.
-
-4. **Número máximo de iterações:**
-   - Caso o método não converja antes de atingir o número máximo de iterações, uma mensagem é exibida e a última solução calculada é retornada. Isso garante que o método não entre em um loop infinito em casos onde a convergência não ocorre.
-
-5. **Exemplo prático:**
-   - O exemplo fornecido resolve o sistema linear Ax = b usando o método de Gauss-Jacobi, onde A é uma matriz 3x3 e b é um vetor de 3 elementos. A solução final é impressa após a convergência do método ou após o número máximo de iterações.
-
-6. **Eficiência:**
-   - O método de Gauss-Jacobi pode ser lento em sistemas grandes ou quando a matriz não é bem condicionada. Métodos como Gauss-Seidel ou LU com pivotamento podem ser mais eficientes em tais casos.
-"""
+# Verifica se o script está sendo executado diretamente
+if __name__ == "__main__":
+    main()  # Chama a função principal para iniciar o programa
