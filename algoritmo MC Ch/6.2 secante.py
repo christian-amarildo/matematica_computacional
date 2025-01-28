@@ -1,82 +1,208 @@
+# -*- coding: utf-8 -*-
+"""
+Calculadora de Raízes pelo Método da Secante
+============================================
+
+Este programa encontra a raiz de uma função contínua utilizando o Método da Secante.
+
+Funcionalidades:
+1. Definição interativa da função f(x).
+2. Entrada dos chutes iniciais x0 e x1.
+3. Definição dos critérios de precisão e1 e e2.
+4. Exibição detalhada de cada iteração do método.
+5. Retorno da raiz aproximada com a precisão especificada.
+
+Autor: ChatGPT
+Data: 2025-01-27
+"""
+
 import math  # Importa a biblioteca matemática para usar funções como a exponencial (math.e) e o cosseno (math.cos).
 
-def secante(x0, x1, e1, e2):
-    """
-    Implementa o método da Secante para encontrar a raiz de uma função.
-    - x0, x1: Chutes iniciais para as raízes (dois pontos diferentes para iniciar o método).
-    - e1: Precisão desejada para o valor da função, ou seja, |f(x2)| < e1.
-    - e2: Precisão desejada para a diferença entre iterações consecutivas, ou seja, |x2 - x1| < e2.
-    """
-    
-    # Verifica se o valor de f(x0) já está suficientemente perto de zero (raiz).
-    # Se f(x0) for menor que e1, então x0 é uma boa aproximação da raiz.
-    if abs(f(x0)) < e1:
-        return x0  # Se f(x0) estiver suficientemente perto de zero, retorna x0 como a raiz encontrada.
-    
-    # Verifica se o valor de x1 já está suficientemente perto de zero ou se a diferença entre x1 e x0 é pequena o suficiente.
-    # Isso evita continuar o processo caso já tenhamos uma boa aproximação da raiz.
-    if abs(x1) < e1 or abs(x1 - x0) < e2:
-        return x1  # Se x1 já for uma boa aproximação (|f(x1)| < e1 ou |x1 - x0| < e2), retorna x1 como a raiz.
-
-    k = 1  # Inicializa o contador de iterações. Isso será usado para monitorar o número de iterações realizadas.
-
-    # Início do loop principal do método da secante, que vai continuar até que a precisão desejada seja alcançada.
-    while True:
-        # Calcula o novo ponto x2 usando a fórmula da secante:
-        # x2 = x1 - f(x1)/(f(x1) - f(x0)) * (x1 - x0)
-        # Essa fórmula ajusta x1 com base na inclinação da secante entre (x0, f(x0)) e (x1, f(x1)).
-        x2 = x1 - (f(x1) / (f(x1) - f(x0))) * (x1 - x0)
-
-        # Critério de parada 1: Se o valor de f(x2) for menor que e1 (a função está suficientemente próxima de zero),
-        # ou se a diferença entre x2 e x1 for menor que e2 (as iterações estão estabilizando).
-        if abs(f(x2)) < e1 or abs(x2 - x1) < e2:
-            return x2  # Se qualquer critério de parada for atendido, retorna x2 como a raiz encontrada.
-        
-        # Atualiza os valores de x0 e x1 para as próximas iterações.
-        # x0 se torna x1 e x1 se torna x2.
-        x0 = x1
-        x1 = x2
-
-        # Incrementa o contador de iterações, mostrando o progresso do método.
-        k += 1
-
-
-# Define a função f(x) cuja raiz será buscada usando o método da secante.
 def f(x):
-    # A função é f(x) = e^(-x^2) - cos(x), uma função que combina a exponencial negativa e o cosseno.
+    """
+    Define a função f(x) cuja raiz será buscada.
+
+    Retorna:
+        float: Valor de f(x)
+
+    Nota:
+        - Modifique esta função conforme necessário para buscar a raiz de diferentes funções.
+        - Exemplo atual: f(x) = e^(-x^2) - cos(x)
+    """
     return math.e**(-x**2) - math.cos(x)  # Retorna o valor de f(x).
 
-# Define as precisões desejadas:
-e1, e2 = 1e-6, 1e-6  # Define as precisões e1 (para a função) e e2 (para a diferença entre iterações consecutivas).
+def secante(x0, x1, e1, e2, max_iter=1000):
+    """
+    Implementa o Método da Secante para encontrar a raiz de uma função f(x).
 
-# Chutes iniciais para as raízes, ou seja, os valores de x0 e x1.
-x0 = 1.2  # Chute inicial x0 = 1.2, uma estimativa inicial da raiz.
-x1 = 2.2  # Chute inicial x1 = 2.2, outra estimativa para começar o processo.
+    Parâmetros:
+        x0 (float): Primeiro chute inicial para a raiz.
+        x1 (float): Segundo chute inicial para a raiz.
+        e1 (float): Precisão desejada para o valor da função, ou seja, |f(x)| < e1.
+        e2 (float): Precisão desejada para a diferença entre iterações consecutivas, ou seja, |x2 - x1| < e2.
+        max_iter (int): Número máximo de iterações para evitar loops infinitos.
 
-# Chama a função secante para encontrar a raiz da função f(x) com os chutes iniciais e as precisões especificadas.
-print(secante(x0, x1, e1, e2))  # Imprime a raiz encontrada pelo método da secante.
+    Retorna:
+        float: Raiz aproximada de f(x).
 
-"""
-Comentários gerais sobre o código:
-===================================
-1. **Funcionamento do método da secante:**
-   - O método da secante é um método iterativo para encontrar raízes de uma função, que é similar ao método de Newton-Raphson, mas não requer o cálculo da derivada.
-   - O método utiliza dois chutes iniciais, x0 e x1, e gera novas aproximações x2 usando a fórmula da secante.
+    Levanta:
+        ValueError: Se f(x0) * f(x1) >= 0, indicando que não há garantia de raiz no intervalo.
+        RuntimeError: Se o método não convergir dentro do número máximo de iterações.
+    """
 
-2. **Critérios de parada:**
-   - O loop principal do método para quando:
-     a) |f(x2)| < e1: a função está suficientemente próxima de zero, indicando que x2 é uma boa aproximação da raiz.
-     b) |x2 - x1| < e2: a diferença entre as iterações consecutivas é muito pequena, indicando que o processo convergiu.
+    # Calcula f(x0) e f(x1) para verificar a condição inicial do método
+    fx0 = f(x0)  # Valor da função no primeiro chute
+    fx1 = f(x1)  # Valor da função no segundo chute
 
-3. **Convergência do método:**
-   - O método da secante geralmente converge rapidamente se os chutes iniciais estão próximos da raiz, mas pode falhar se os chutes iniciais estiverem muito distantes ou se a função tiver comportamento irregular.
+    # Exibe os valores iniciais dos chutes e seus respectivos f(x)
+    print(f"Verificando os chutes iniciais:")
+    print(f"f({x0}) = {fx0}")
+    print(f"f({x1}) = {fx1}\n")
 
-4. **Exemplo da função f(x):**
-   - A função f(x) = e^(-x^2) - cos(x) tem raízes onde o valor da função é igual a zero.
-   - O método da secante será usado para encontrar essas raízes em torno dos chutes iniciais x0 = 1.2 e x1 = 2.2.
+    # Verifica se os chutes iniciais satisfazem a condição f(x0) * f(x1) < 0
+    # Esta condição garante que há pelo menos uma raiz no intervalo [x0, x1]
+    if fx0 * fx1 >= 0:
+        raise ValueError("Os chutes iniciais não satisfazem f(x0) * f(x1) < 0. Método da Secante não pode ser aplicado.")
 
-5. **Cuidados:**
-   - A convergência do método depende da escolha dos chutes iniciais. Se os chutes estiverem muito distantes ou se a função tiver múltiplas raízes, o método pode não convergir ou convergir para a raiz errada.
-   - É importante garantir que os valores de f(x0) e f(x1) não sejam ambos muito próximos de zero antes de iniciar o processo, pois isso pode levar a erros numéricos.
+    # Inicializa o contador de iterações
+    k = 0
 
-"""
+    # Informa o início do método e os critérios de parada
+    print("Iniciando o Método da Secante...")
+    print(f"Chutes iniciais: x0 = {x0}, x1 = {x1}")
+    print(f"Critérios de parada:")
+    print(f"  - |f(x)| < {e1}")
+    print(f"  - |x2 - x1| < {e2}")
+    print(f"Máximo de iterações: {max_iter}\n")
+
+    # Loop principal do método da Secante
+    while k < max_iter:
+        # Calcula o denominador da fórmula da Secante para evitar divisão por zero
+        denominador = fx1 - fx0
+
+        # Verifica se o denominador é zero para evitar erro de divisão
+        if denominador == 0:
+            raise ValueError(f"Divisão por zero na iteração {k}. Método da Secante falhou.")
+
+        # Calcula o próximo ponto x2 usando a fórmula da Secante
+        x2 = x1 - (fx1 * (x1 - x0)) / denominador
+
+        # Calcula f(x2) para verificar os critérios de parada
+        fx2 = f(x2)
+
+        # Exibe os detalhes da iteração atual
+        print(f"Iteração {k}:")
+        print(f"  x{k} = {x0}")
+        print(f"  x{k+1} = {x1}")
+        print(f"  x{k+2} = {x2}")
+        print(f"  f(x{k+2}) = {fx2}\n")
+
+        # Verifica o primeiro critério de parada: |f(x2)| < e1
+        if abs(fx2) < e1:
+            print(f"Critério de parada atendido: |f(x2)| = {abs(fx2)} < {e1}")
+            print(f"Raiz aproximada encontrada: {x2}\n")
+            return x2  # Retorna a raiz encontrada
+
+        # Verifica o segundo critério de parada: |x2 - x1| < e2
+        if abs(x2 - x1) < e2:
+            print(f"Critério de parada atendido: |x2 - x1| = {abs(x2 - x1)} < {e2}")
+            print(f"Raiz aproximada encontrada: {x2}\n")
+            return x2  # Retorna a raiz encontrada
+
+        # Atualiza os valores de x0 e x1 para a próxima iteração
+        x0, x1 = x1, x2
+        fx0, fx1 = fx1, fx2
+
+        # Incrementa o contador de iterações
+        k += 1
+
+    # Se o método não convergir dentro do número máximo de iterações, levanta um erro
+    raise RuntimeError(f"O método da Secante não convergiu após {max_iter} iterações.")
+
+def main():
+    """
+    Função principal que controla o fluxo do programa.
+
+    Executa as seguintes etapas:
+    1. Exibe uma mensagem de boas-vindas.
+    2. Informa ao usuário sobre a função definida.
+    3. Solicita ao usuário os chutes iniciais x0 e x1.
+    4. Solicita ao usuário os critérios de precisão e1 e e2.
+    5. Executa o Método da Secante para encontrar a raiz.
+    6. Exibe o resultado final.
+    7. Termina o programa.
+    """
+
+    # Exibe uma mensagem de boas-vindas e informações iniciais
+    print("===========================================")
+    print("       CALCULADORA DE RAÍZES - SECANTE")
+    print("===========================================\n")
+
+    # Informa ao usuário sobre a função definida
+    print("Por favor, defina a função f(x) no código.")
+    print("Atualmente, a função está definida como:")
+    print("f(x) = e^(-x^2) - cos(x)")
+    print("Se desejar modificar a função, edite a função f(x) diretamente no código.\n")
+
+    # Solicita ao usuário os chutes iniciais x0 e x1
+    while True:
+        try:
+            # Solicita o primeiro chute inicial x0
+            x0 = float(input("Digite o primeiro chute inicial (x0): "))
+            # Solicita o segundo chute inicial x1
+            x1 = float(input("Digite o segundo chute inicial (x1): "))
+            break  # Sai do loop se as entradas forem válidas
+        except ValueError:
+            # Trata casos onde a entrada não é um número válido
+            print("Entrada inválida. Por favor, digite números válidos para os chutes iniciais.\n")
+
+    # Solicita ao usuário a precisão desejada e1
+    while True:
+        try:
+            # Solicita a precisão para |f(x)|
+            e1 = float(input("Digite a precisão desejada para |f(x)| (e1) (exemplo: 1e-6): "))
+            if e1 <= 0:
+                # Verifica se a precisão é um número positivo
+                print("A precisão e1 deve ser um número positivo. Tente novamente.\n")
+                continue
+            break  # Sai do loop se a entrada for válida
+        except ValueError:
+            # Trata casos onde a entrada não é um número válido
+            print("Entrada inválida. Por favor, digite um número válido para e1.\n")
+
+    # Solicita ao usuário a precisão desejada e2
+    while True:
+        try:
+            # Solicita a precisão para |x2 - x1|
+            e2 = float(input("Digite a precisão desejada para |x2 - x1| (e2) (exemplo: 1e-6): "))
+            if e2 <= 0:
+                # Verifica se a precisão é um número positivo
+                print("A precisão e2 deve ser um número positivo. Tente novamente.\n")
+                continue
+            break  # Sai do loop se a entrada for válida
+        except ValueError:
+            # Trata casos onde a entrada não é um número válido
+            print("Entrada inválida. Por favor, digite um número válido para e2.\n")
+
+    # Informa ao usuário que o método será iniciado
+    print("\nExecutando o Método da Secante...\n")
+
+    # Executa o Método da Secante para encontrar a raiz da função f(x)
+    try:
+        raiz = secante(x0, x1, e1, e2)  # Chama a função secante com os parâmetros fornecidos
+        print(f"Resultado: A raiz aproximada de f(x) é: {raiz}\n")  # Exibe a raiz aproximada encontrada
+    except ValueError as ve:
+        # Trata erros levantados pela função secante, como chutes iniciais inválidos
+        print(f"Erro: {ve}\n")
+    except RuntimeError as re:
+        # Trata erros de não convergência após o número máximo de iterações
+        print(f"Erro: {re}\n")
+
+    # Exibe uma mensagem de encerramento
+    print("===========================================")
+    print("         FIM DA CALCULADORA DE RAÍZES")
+    print("===========================================\n")
+
+# Verifica se o script está sendo executado diretamente
+if __name__ == "__main__":
+    main()  # Chama a função principal para iniciar o programa
