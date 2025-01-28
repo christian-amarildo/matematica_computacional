@@ -1,100 +1,175 @@
-def lu_decomposition_with_pivoting(A, b):
+# -*- coding: utf-8 -*-
+"""
+Calculadora de Sistemas Lineares pelo Método de Fatoração LU com Pivotamento Parcial
+===================================================================================
+
+Este programa resolve sistemas lineares da forma Ax = b utilizando o Método de Fatoração LU
+com Pivotamento Parcial. O método consiste em decompor a matriz de coeficientes A em duas matrizes
+triangulares: L (Triangular Inferior) e U (Triangular Superior), de forma que PA = LU,
+onde P é a matriz de permutação devido ao pivotamento. Após a decomposição, o sistema Ax = b
+é resolvido em duas etapas: substituição para frente e substituição para trás.
+
+Funcionalidades:
+1. Definição da matriz de coeficientes A e do vetor de constantes b.
+2. Fatoração LU com Pivotamento Parcial para decompor a matriz A.
+3. Substituição para Frente para resolver Ly = Pb.
+4. Substituição para Trás para resolver Ux = y.
+5. Validação e tratamento de erros, como matrizes singulares ou não quadradas.
+6. Saída detalhada do processo de fatoração e substituição.
+
+Autor: ChatGPT
+Data: 2025-01-27
+"""
+
+def fatoracao_LU_pivot(A, b):
     """
     Resolve um sistema linear Ax = b utilizando a decomposição LU com pivotamento parcial.
-    - A: Matriz dos coeficientes (n x n).
-    - b: Vetor de constantes (tamanho n).
-    - Retorna o vetor solução x.
+
+    Parâmetros:
+        A (list of list of floats): Matriz de coeficientes (n x n).
+        b (list of floats): Vetor de constantes (tamanho n).
+
+    Retorna:
+        x (list of floats): Vetor solução x.
+
+    Levanta:
+        ValueError: Se a matriz não for quadrada ou se for singular.
     """
-    
-    n = len(A)  # n é o número de linhas da matriz A (também o número de colunas, pois A é quadrada).
+    n = len(A)  # Obtém o número de linhas da matriz A
 
-    # Inicialização do vetor de permutação p (representa a troca de linhas durante o pivotamento).
-    p = list(range(n))  # p é uma lista que armazena os índices das linhas de A após o pivotamento.
+    # Verificação se a matriz A é quadrada (n x n)
+    for idx, row in enumerate(A):
+        if len(row) != n:
+            raise ValueError(f"A matriz deve ser quadrada. Linha {idx + 1} tem {len(row)} colunas.")
 
-    # Decomposição LU com pivotamento parcial (soma da matriz L e U).
-    for k in range(n - 1):  # k percorre as colunas de 0 até n-2 (para cada passo da decomposição).
-        
-        # Encontrar o pivô, ou seja, o maior valor absoluto na coluna atual.
-        pv = abs(A[k][k])  # Inicializa pv com o valor absoluto do elemento A[k][k].
-        r = k  # Inicializa r como o índice da linha k.
-        
-        for i in range(k + 1, n):  # Percorre as linhas abaixo de k para encontrar o pivô.
-            if abs(A[i][k]) > pv:  # Se o valor absoluto de A[i][k] for maior que o pivô atual.
-                pv = abs(A[i][k])  # Atualiza o pivô com o novo valor.
-                r = i  # Atualiza o índice da linha do pivô.
+    # Inicializando as matrizes L e U com zeros
+    # L será a matriz triangular inferior (com 1s na diagonal principal)
+    # U será a matriz triangular superior
+    L = [[0.0] * n for _ in range(n)]  # Cria uma matriz n x n com zeros para L
+    U = [[0.0] * n for _ in range(n)]  # Cria uma matriz n x n com zeros para U
 
-        if pv == 0:  # Se o pivô encontrado é zero, significa que a matriz A é singular.
-            raise ValueError("A matriz A é singular.")  # Levanta um erro informando que a matriz não tem solução.
+    # Inicialização do vetor de permutação p (representa a troca de linhas durante o pivotamento)
+    p = list(range(n))  # p é uma lista que armazena os índices das linhas de A após o pivotamento
 
-        # Troca as linhas k e r, tanto na matriz A quanto no vetor de permutação p.
-        if r != k:  # Se o pivô não está na posição k, as linhas devem ser trocadas.
-            p[k], p[r] = p[r], p[k]  # Troca as posições de k e r no vetor p.
-            A[k], A[r] = A[r], A[k]  # Troca as linhas k e r na matriz A.
+    # Decomposição LU com pivotamento parcial: PA = LU
+    for k in range(n):
+        # Encontrar o pivô na coluna k (maior valor absoluto para estabilidade numérica)
+        pivot = abs(A[k][k])  # Inicializa o pivô com o valor absoluto de A[k][k]
+        r = k  # Inicializa r como o índice da linha k
 
-        # Atualização da matriz A: calcula os multiplicadores m e atualiza os valores abaixo do pivô.
-        for i in range(k + 1, n):  # Percorre as linhas abaixo de k (de k+1 até n-1).
-            m = A[i][k] / A[k][k]  # Calcula o multiplicador m, que é o valor A[i][k] dividido pelo pivô A[k][k].
-            A[i][k] = m  # Armazena o valor de m na matriz A.
-            for j in range(k + 1, n):  # Percorre as colunas à direita do pivô para atualizar os valores de A.
-                A[i][j] -= m * A[k][j]  # Subtrai m * A[k][j] de A[i][j], o que faz A ficar triangular superior.
+        for i in range(k + 1, n):
+            if abs(A[i][k]) > pivot:
+                pivot = abs(A[i][k])  # Atualiza o pivô com um valor maior
+                r = i  # Atualiza o índice da linha do pivô
 
-    # Substituição de Pb: Agora que A foi decomposta, é preciso atualizar o vetor b.
-    c = [0] * n  # Inicializa o vetor c com zeros, que será a versão modificada de b após o pivotamento.
-    for i in range(n):  # Para cada linha da matriz A.
-        r = p[i]  # r recebe o índice da linha permutada do vetor p.
-        c[i] = b[r]  # Atualiza c[i] com o valor de b[r], trocando os elementos conforme o vetor de permutação p.
+        if pivot == 0:
+            raise ValueError("A matriz A é singular e não pode ser decomposta em LU.")
 
-    # Substituição direta Ly = c: Resolve o sistema triangular inferior Ly = c.
-    y = [0] * n  # Inicializa o vetor y com zeros. Este vetor vai armazenar a solução intermediária.
-    for i in range(n):  # Para cada linha de L (e y).
-        soma = 0  # Variável que acumula a soma de L[i][j] * y[j] para j < i.
-        for j in range(i):  # Percorre as colunas à esquerda de i (todas as colunas de L até a diagonal).
-            soma += A[i][j] * y[j]  # Soma os termos L[i][j] * y[j].
-        y[i] = c[i] - soma  # Atualiza y[i] subtraindo soma de c[i].
+        # Troca as linhas k e r na matriz A e no vetor de permutação p
+        if r != k:
+            A[k], A[r] = A[r], A[k]  # Troca as linhas na matriz A
+            p[k], p[r] = p[r], p[k]  # Troca os índices no vetor de permutação p
 
-    # Substituição retroativa Ux = y: Resolve o sistema triangular superior Ux = y.
-    x = [0] * n  # Inicializa o vetor x com zeros. Este vetor será a solução final.
-    for i in range(n - 1, -1, -1):  # i percorre de n-1 até 0 (de baixo para cima, devido à estrutura triangular superior de U).
-        soma = 0  # Variável que acumula a soma de U[i][j] * x[j] para j > i.
-        for j in range(i + 1, n):  # Percorre as colunas à direita de i (todas as colunas de U após a diagonal).
-            soma += A[i][j] * x[j]  # Soma os termos U[i][j] * x[j].
-        x[i] = (y[i] - soma) / A[i][i]  # Atualiza x[i] dividindo a diferença y[i] - soma por A[i][i].
+        # Preenche a matriz U (triangular superior)
+        for j in range(k, n):
+            sum_U = 0.0  # Inicializa a soma dos produtos L[k][m] * U[m][j]
+            for m in range(k):
+                sum_U += L[k][m] * U[m][j]  # Soma L[k][m] * U[m][j] para m de 0 a k-1
+            U[k][j] = A[k][j] - sum_U  # Calcula o elemento U[k][j]
 
-    return x  # Retorna o vetor solução x, que é a solução do sistema Ax = b.
+        # Preenche a matriz L (triangular inferior)
+        for i in range(k, n):
+            if i == k:
+                L[k][k] = 1.0  # Define 1 na diagonal principal de L
+            else:
+                sum_LU = 0.0  # Inicializa a soma dos produtos L[i][m] * U[m][k]
+                for m in range(k):
+                    sum_LU += L[i][m] * U[m][k]  # Soma L[i][m] * U[m][k] para m de 0 a k-1
+                L[i][k] = (A[i][k] - sum_LU) / U[k][k]  # Calcula o elemento L[i][k]
 
-# Exemplo de uso:
+    # Exibe as matrizes L e U após a decomposição
+    print("\n=== DECOMPOSIÇÃO LU CONCLUÍDA COM PIVOTAMENTO ===")
+    print("\nMatriz L (Triangular Inferior):")
+    for row in L:
+        print(["{0:.4f}".format(num) for num in row])  # Formata os números para 4 casas decimais
 
-# Matriz de coeficientes A (3x3).
-A = [
-    [2, -1, -2],  # Primeira linha da matriz A.
-    [-4, 6, 3],   # Segunda linha da matriz A.
-    [-4, -2, 8]   # Terceira linha da matriz A.
-]
+    print("\nMatriz U (Triangular Superior):")
+    for row in U:
+        print(["{0:.4f}".format(num) for num in row])  # Formata os números para 4 casas decimais
 
-# Vetor b de constantes (tamanho 3).
-b = [1, 2, 3]  # O vetor b contém os valores do lado direito das equações.
+    # Substituição para Frente: Resolver Ly = Pb (triangular inferior)
+    y = [0.0] * n  # Inicializa o vetor y com zeros
+    print("\n=== SUBSTITUIÇÃO PARA FRENTE ===")
+    for i in range(n):
+        sum_Ly = 0.0  # Inicializa a soma dos produtos L[i][j] * y[j]
+        for j in range(i):
+            sum_Ly += L[i][j] * y[j]  # Soma L[i][j] * y[j] para j de 0 a i-1
+        y[i] = b[p[i]] - sum_Ly  # Calcula y[i] subtraindo a soma de b[p[i]] - sum_Ly
+        print(f"y[{i + 1}] = {y[i]:.6f}")  # Exibe y[i] com 6 casas decimais
 
-# Chama a função de decomposição LU com pivotamento para resolver o sistema linear.
-x = lu_decomposition_with_pivoting(A, b)  # x será o vetor solução calculado pela decomposição LU com pivotamento.
+    # Substituição para Trás: Resolver Ux = y (triangular superior)
+    x = [0.0] * n  # Inicializa o vetor solução x com zeros
+    print("\n=== SUBSTITUIÇÃO PARA TRÁS ===")
+    for i in range(n - 1, -1, -1):
+        sum_Ux = 0.0  # Inicializa a soma dos produtos U[i][j] * x[j]
+        for j in range(i + 1, n):
+            sum_Ux += U[i][j] * x[j]  # Soma U[i][j] * x[j] para j de i+1 a n-1
+        if U[i][i] == 0:
+            raise ValueError(f"Divisão por zero detectada na posição U[{i}][{i}]. Sistema sem solução única.")
+        x[i] = (y[i] - sum_Ux) / U[i][i]  # Calcula x[i] dividindo a diferença y[i] - sum_Ux por U[i][i]
+        print(f"x[{i + 1}] = ({y[i]} - {sum_Ux}) / {U[i][i]} = {x[i]:.6f}")  # Exibe x[i] com 6 casas decimais
 
-# Exibe a solução do sistema linear.
-print("Solução:", x)  # Imprime o vetor solução x.
+    return x  # Retorna o vetor solução x
 
-"""
-Comentários gerais sobre o código:
-===================================
-1. **Pivotamento parcial:**
-   - O método de decomposição LU com pivotamento tem como objetivo evitar a divisão por números pequenos ou zero, o que pode causar instabilidade numérica. Isso é feito trocando as linhas da matriz A de modo que o maior valor absoluto seja usado como pivô em cada etapa.
+def main():
+    """
+    Função principal que controla o fluxo do programa.
 
-2. **Decomposição LU:**
-   - A decomposição LU é uma técnica em que a matriz A é decomposta em uma matriz triangular inferior L e uma matriz triangular superior U, tal que A = L * U. O algoritmo também realiza pivotamento para garantir estabilidade numérica.
+    Executa as seguintes etapas:
+    1. Define a matriz de coeficientes A e o vetor de constantes b.
+    2. Exibe o sistema linear original.
+    3. Executa a fatoração LU com pivotamento parcial para decompor a matriz A.
+    4. Executa a substituição retroativa para encontrar as soluções das variáveis.
+    5. Exibe o vetor solução x.
+    """
+    # Exemplo de sistema linear 3x3:
+    # 2x1 - 1x2 - 2x3 = 1
+    # -4x1 + 6x2 + 3x3 = 2
+    # -4x1 - 2x2 + 8x3 = 3
+    A = [
+        [2, -1, -2],  # Primeira linha da matriz A
+        [-4, 6, 3],   # Segunda linha da matriz A
+        [-4, -2, 8]    # Terceira linha da matriz A
+    ]
 
-3. **Substituição direta e retroativa:**
-   - Após decompor A em L e U, o sistema linear Ax = b é resolvido em duas etapas: a substituição direta (Ly = c) e a substituição retroativa (Ux = y), que são necessárias devido à estrutura triangular de L e U.
+    # Vetor de constantes do sistema linear
+    b = [1, 2, 3]  # b contém os valores do lado direito das equações
 
-4. **Vetor de permutação:**
-   - O vetor de permutação p armazena a ordem das linhas da matriz A após o pivotamento. Isso é necessário para garantir que o vetor b também seja reorganizado corretamente.
+    print("=== RESOLUÇÃO DE SISTEMAS LINEARES COM FATORAÇÃO LU COM PIVOTAMENTO ===")
+    print("\nSistema linear a ser resolvido:")
+    for i in range(len(A)):  # i percorre as linhas de A
+        eq = ""  # Inicializa a string da equação
+        for j in range(len(A[i])):  # j percorre as colunas de A[i]
+            eq += f"{A[i][j]}x{j + 1} + "  # Constrói a parte esquerda da equação
+        eq = eq.rstrip(" + ") + f" = {b[i]}"  # Remove o último " + " e adiciona "= b[i]"
+        print(eq)  # Imprime a equação
 
-5. **Solução final:**
-   - O vetor x obtido no final contém a solução do sistema linear, e é retornado pela função.
-"""
+    # Chama a função de decomposição LU com pivotamento para resolver o sistema linear
+    try:
+        x = fatoracao_LU_pivot(A, b)  # x será o vetor solução calculado pela decomposição LU com pivotamento
+        # Exibe a solução do sistema linear
+        print("\n=== SOLUÇÃO DO SISTEMA ===")
+        for i in range(len(x)):  # i percorre as variáveis de x
+            print(f"x{i + 1} = {x[i]:.6f}")  # Imprime cada variável com 6 casas decimais
+    except ValueError as ve:
+        # Trata erros como matrizes não quadradas ou singulares
+        print(f"\nErro: {ve}")
+    except Exception as e:
+        # Trata quaisquer outros erros inesperados
+        print(f"\nOcorreu um erro inesperado: {e}")
+
+    print("\n=== FIM DA RESOLUÇÃO ===")
+
+# Verifica se o script está sendo executado diretamente
+if __name__ == "__main__":
+    main()  # Chama a função principal para iniciar o programa
